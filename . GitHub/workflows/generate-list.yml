@@ -1,0 +1,26 @@
+name: Generate Video List
+on:
+  push:
+    paths:
+      - 'videos/**' # Only runs when you add/delete videos
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Generate JSON
+        run: |
+          cd videos
+          # Lists all mp4 files and formats them into a JSON array
+          ls *.mp4 | jq -R -s -c 'split("\n")[:-1]' > ../videos.json
+          
+      - name: Commit changes
+        run: |
+          git config --global user.name 'VideoBot'
+          git config --global user.email 'bot@github.com'
+          git add videos.json
+          git commit -m "Auto-update video list" || exit 0
+          git push
+          
