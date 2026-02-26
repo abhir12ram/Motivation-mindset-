@@ -1,101 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reel Fix</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; overflow: hidden; font-family: sans-serif; }
-        .container { width: 100vw; height: 100vh; position: relative; }
-        
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reels WebApp</title>
 
-        #next-btn {
-            position: absolute;
-            bottom: 50px;
-            right: 20px;
-            width: 70px;
-            height: 70px;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid white;
-            color: white;
-            border-radius: 50%;
-            font-size: 30px;
-            z-index: 100;
-            cursor: pointer;
-        }
+<style>
+body{
+  margin:0;
+  background:black;
+  overflow:hidden;
+  font-family:sans-serif;
+}
 
-        #debug-info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: lime;
-            font-size: 12px;
-            background: rgba(0,0,0,0.5);
-            padding: 5px;
-            pointer-events: none;
-        }
-    </style>
+#reelContainer{
+  height:100vh;
+  width:100vw;
+  overflow-y:scroll;
+  scroll-snap-type:y mandatory;
+}
+
+.reel{
+  height:100vh;
+  width:100%;
+  scroll-snap-align:start;
+  position:relative;
+}
+
+video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+</style>
+
 </head>
 <body>
 
-<div class="container">
-    <div id="debug-info">Initializing...</div>
-    <video id="player" playsinline autoplay muted loop></video>
-    <button id="next-btn">↓</button>
-</div>
+<div id="reelContainer"></div>
 
 <script>
-    const player = document.getElementById('player');
-    const btn = document.getElementById('next-btn');
-    const debug = document.getElementById('debug-info');
+const container = document.getElementById("reelContainer");
 
-    // CONFIG
-    const MAX_FILES = 50; 
-    const FOLDER = "videos/";
+async function loadVideos() {
 
-    function loadReel() {
-        const id = Math.floor(Math.random() * MAX_FILES) + 1;
-        const videoSrc = `${FOLDER}${id}.mp4`;
-        
-        debug.innerText = `Attempting: ${id}.mp4`;
-        
-        player.src = videoSrc;
-        player.load(); // Vital for Safari/iOS
-        
-        // Attempt to play
-        const playPromise = player.play();
+  const response = await fetch("videos.json");
+  const data = await response.json();
 
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                debug.innerText = `Now Playing: ${id}.mp4`;
-            }).catch(error => {
-                // If it fails (file doesn't exist 404), try another one
-                console.log("File error or block, skipping...");
-                loadReel();
-            });
-        }
-    }
+  data.videos.forEach(src => {
 
-    // If the video source triggers an error (404), skip automatically
-    player.onerror = () => {
-        debug.innerText = `Skipping missing file...`;
-        loadReel();
-    };
+    const reel = document.createElement("div");
+    reel.className = "reel";
 
-    btn.addEventListener('click', () => {
-        player.muted = false; // Unmute on first click
-        loadReel();
+    const video = document.createElement("video");
+    video.src = src;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+
+    reel.appendChild(video);
+    container.appendChild(reel);
+  });
+
+  setupAutoPlay();
+}
+
+function setupAutoPlay(){
+
+  const videos = document.querySelectorAll("video");
+
+  const observer = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.play();
+      }else{
+        entry.target.pause();
+      }
     });
+  },{threshold:0.7});
 
-    // Start immediately
-    window.addEventListener('load', loadReel);
+  videos.forEach(video=>observer.observe(video));
+}
+
+loadVideos();
 </script>
 
 </body>
