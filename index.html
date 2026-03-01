@@ -2,159 +2,325 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width,initial-scale=1.0">
-
-<title>Reel WebApp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Need Consistincy Broo</title>
 
 <style>
+*{box-sizing:border-box}
 
 body{
 margin:0;
-background:black;
-font-family:Arial;
+font-family:Poppins,sans-serif;
+background:radial-gradient(circle at top,#1a1a1a,#000);
+color:#fff;
 overflow:hidden;
+display:flex;
+flex-direction:column;
+align-items:center;
+height:100vh;
+}
+
+header{
+background:linear-gradient(90deg,#222,#111);
+text-align:center;
+padding:15px;
+font-size:1.3em;
+font-weight:600;
+width:100%;
 }
 
 #reelContainer{
-height:100vh;
-overflow-y:scroll;
-scroll-snap-type:y mandatory;
+position:relative;
+width:100%;
+height:calc(100vh - 140px);
+background:#000;
+display:flex;
+justify-content:center;
+align-items:center;
+border-radius:16px;
+margin-top:10px;
 }
 
-.reel{
-height:100vh;
-scroll-snap-align:start;
-position:relative;
+video{
+height:100%;
+max-width:100%;
+object-fit:contain;
+border-radius:16px;
+transition:opacity .4s ease;
+}
+
+.meta{
+position:absolute;
+bottom:20px;
+left:20px;
+background:rgba(0,0,0,.6);
+padding:8px 14px;
+border-radius:12px;
+}
+
+.controls{
 display:flex;
+gap:8px;
+margin-top:12px;
+}
+
+button{
+background:linear-gradient(135deg,#007bff,#00c6ff);
+color:#fff;
+border:none;
+padding:8px 14px;
+border-radius:8px;
+cursor:pointer;
+font-weight:600;
+}
+
+/* SETTINGS POPUP */
+#settingsPopup{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.7);
+display:none;
 justify-content:center;
 align-items:center;
 }
 
-video{
-width:100%;
-height:100%;
-object-fit:cover;
+.settingsBox{
+background:#111;
+padding:20px;
+border-radius:14px;
+width:300px;
+max-height:80vh;
+overflow:auto;
 }
 
-.overlay{
-position:absolute;
-bottom:80px;
-left:15px;
-color:white;
-}
-
-.controls{
-position:absolute;
-right:15px;
-bottom:120px;
-color:white;
-text-align:center;
-}
-
-.btn{
+.settingItem{
 margin:12px 0;
-font-size:22px;
-cursor:pointer;
+display:flex;
+justify-content:space-between;
 }
 
-.topbar{
-position:fixed;
-top:0;
+textarea{
 width:100%;
-padding:12px;
-text-align:center;
-background:rgba(0,0,0,0.5);
-color:white;
-z-index:10;
+height:120px;
+margin-top:10px;
+background:#000;
+color:#fff;
+border:1px solid #333;
+border-radius:8px;
+padding:10px;
+resize:none;
 }
 
+footer{
+margin-top:auto;
+font-size:13px;
+opacity:.6;
+}
+
+/* PAUSE ICON */
+#pauseIndicator{
+position:absolute;
+font-size:60px;
+display:none;
+pointer-events:none;
+opacity:0.8;
+}
 </style>
 </head>
 
 <body>
 
-<div class="topbar">🔥 Reel WebApp</div>
-<div id="reelContainer"></div>
+<header>Need Consistincy broo</header>
+
+<div id="reelContainer">
+  <video id="reelVideo" playsinline autoplay muted></video>
+  <div id="pauseIndicator">⏸</div>
+  <div class="meta" id="videoTitle">Loading...</div>
+</div>
+
+<div class="controls">
+  <button id="soundBtn">🔇 Sound</button>
+  <button id="settingsBtn">⚙ Settings</button>
+</div>
+
+<footer>You are the saviour of your life ,oneman army</footer>
+
+<!-- SETTINGS -->
+<div id="settingsPopup">
+  <div class="settingsBox">
+    <h3>⚙ Player Settings</h3>
+
+    <div class="settingItem">
+      <span>Auto Scroll</span>
+      <input type="checkbox" id="autoScrollToggle">
+    </div>
+
+    <div class="settingItem">
+      <span>Shuffle Mode</span>
+      <input type="checkbox" id="shuffleToggle">
+    </div>
+
+    <h3>📝 Notes</h3>
+    <textarea id="notesArea"></textarea>
+
+    <br><br>
+    <button onclick="closeSettings()">Close</button>
+  </div>
+</div>
 
 <script>
+let videos=[];
+let currentIndex=0;
 
-const container =
-document.getElementById("reelContainer");
+let autoScroll=
+ localStorage.getItem("autoScroll")!=="false";
 
-/* ==========================
-   LOAD JSON REELS
-   ========================== */
+let shuffleMode=
+ localStorage.getItem("shuffleMode")==="true";
 
-fetch("reels.json")
-.then(res => res.json())
-.then(data => {
+let soundEnabled=false;
 
-data.reels.forEach(item => {
+const video=document.getElementById("reelVideo");
+const title=document.getElementById("videoTitle");
+const container=document.getElementById("reelContainer");
+const pauseIcon=document.getElementById("pauseIndicator");
 
-let reel = document.createElement("div");
-reel.className="reel";
+/* ---------- SOUND ---------- */
+const soundBtn=document.getElementById("soundBtn");
 
-let video = document.createElement("video");
-video.src = item.video;
-video.loop = true;
-video.playsInline = true;
-
-let overlay = document.createElement("div");
-overlay.className="overlay";
-overlay.innerHTML =
-`<h3>${item.username}</h3>
-<p>${item.caption}</p>`;
-
-let controls = document.createElement("div");
-controls.className="controls";
-controls.innerHTML=`
-<div class="btn">❤️</div>
-<div class="btn">💬</div>
-<div class="btn">🔗</div>
-`;
-
-reel.appendChild(video);
-reel.appendChild(overlay);
-reel.appendChild(controls);
-
-container.appendChild(reel);
-
-});
-
-/* ==========================
-   AUTO PLAY
-   ========================== */
-
-const videos =
-document.querySelectorAll("video");
-
-const observer =
-new IntersectionObserver(entries=>{
-
-entries.forEach(entry=>{
-
-if(entry.isIntersecting){
-entry.target.play();
-}else{
-entry.target.pause();
+function enableSound(){
+ video.muted=false;
+ video.volume=1;
+ soundEnabled=true;
+ soundBtn.textContent="🔊 Sound";
 }
 
+function disableSound(){
+ video.muted=true;
+ soundEnabled=false;
+ soundBtn.textContent="🔇 Sound";
+}
+
+soundBtn.onclick=()=>{
+ soundEnabled?disableSound():enableSound();
+};
+
+document.body.addEventListener("click",()=>{
+ if(!soundEnabled) enableSound();
+},{once:true});
+
+/* ---------- SETTINGS ---------- */
+const popup=document.getElementById("settingsPopup");
+const autoToggle=document.getElementById("autoScrollToggle");
+const shuffleToggle=document.getElementById("shuffleToggle");
+const notesArea=document.getElementById("notesArea");
+
+settingsBtn.onclick=()=>{
+ autoToggle.checked=autoScroll;
+ shuffleToggle.checked=shuffleMode;
+ notesArea.value=localStorage.getItem("userNotes")||"";
+ popup.style.display="flex";
+};
+
+function closeSettings(){ popup.style.display="none"; }
+
+autoToggle.onchange=()=>{
+ autoScroll=autoToggle.checked;
+ localStorage.setItem("autoScroll",autoScroll);
+};
+
+shuffleToggle.onchange=()=>{
+ shuffleMode=shuffleToggle.checked;
+ localStorage.setItem("shuffleMode",shuffleMode);
+};
+
+notesArea.addEventListener("input",()=>{
+ localStorage.setItem("userNotes",notesArea.value);
 });
 
-},{threshold:0.7});
+/* ---------- LOAD JSON ---------- */
+async function loadReels(){
+ const res=await fetch("./reels.json",{cache:"no-store"});
+ const data=await res.json();
+ videos=data.videos||[];
+ loadVideo(0);
+}
 
-videos.forEach(v=>{
-observer.observe(v);
+/* ---------- LOAD VIDEO ---------- */
+function loadVideo(index){
 
-v.addEventListener("click",()=>{
-v.paused ? v.play() : v.pause();
+ if(!videos.length)return;
+
+ if(index<0)index=videos.length-1;
+ if(index>=videos.length)index=0;
+
+ currentIndex=index;
+
+ video.style.opacity=0;
+
+ setTimeout(()=>{
+  video.src=videos[index].src;
+  title.textContent=
+   `${videos[index].title} (${index+1}/${videos.length})`;
+
+  video.load();
+  video.play().catch(()=>{});
+  pauseIcon.style.display="none";
+  video.style.opacity=1;
+ },200);
+}
+
+/* ---------- NEXT ---------- */
+function nextVideo(){
+ if(shuffleMode){
+  let r;
+  do{ r=Math.floor(Math.random()*videos.length); }
+  while(r===currentIndex);
+  loadVideo(r);
+ }else{
+  loadVideo(currentIndex+1);
+ }
+}
+
+video.addEventListener("ended",()=>{
+ if(autoScroll) nextVideo();
 });
 
+/* ---------- TAP PAUSE / RESUME ---------- */
+let startY=0;
+let moved=false;
+
+container.addEventListener("touchstart",e=>{
+ startY=e.touches[0].clientY;
+ moved=false;
 });
 
+container.addEventListener("touchmove",()=>{
+ moved=true;
 });
 
+container.addEventListener("touchend",e=>{
+ let endY=e.changedTouches[0].clientY;
+
+ /* SWIPE */
+ if(moved){
+  if(startY-endY>50) nextVideo();
+  if(endY-startY>50) loadVideo(currentIndex-1);
+  return;
+ }
+
+ /* TAP */
+ if(video.paused){
+   video.play();
+   pauseIcon.style.display="none";
+ }else{
+   video.pause();
+   pauseIcon.style.display="block";
+ }
+});
+
+/* START */
+window.onload=loadReels;
 </script>
 
 </body>
