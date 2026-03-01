@@ -1,0 +1,19 @@
+{
+  "reels": [
+    {
+      "video": "video1.mp4",
+      "username": "@user1",
+      "caption": "First reel"
+    },
+    {
+      "video": "video1.mp4",
+      "username": "@user2",
+      "caption": "Second reel"
+    },
+    {
+      "video": "video1.mp4",
+      "username": "@user3",
+      "caption": "Third reel"
+    }
+  ]
+}
