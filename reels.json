@@ -1,19 +1,16 @@
 {
-  "reels": [
+  "videos": [
     {
-      "video": "video1.mp4",
-      "username": "@user1",
-      "caption": "First reel"
+      "title": "Do it now",
+      "src": "video1.mp4"
     },
     {
-      "video": "video1.mp4",
-      "username": "@user2",
-      "caption": "Second reel"
+      "title": "Never Give Up",
+      "src": "video1.mp4"
     },
     {
-      "video": "video1.mp4",
-      "username": "@user3",
-      "caption": "Third reel"
+      "title": "Success Mindset",
+      "src": "video1.mp4"
     }
   ]
 }
